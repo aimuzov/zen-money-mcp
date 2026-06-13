@@ -17,12 +17,14 @@ function waitForAuthCode(cfg: Config): Promise<string> {
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       const url = new URL(req.url ?? '/', cfg.redirectUri)
-      if (!url.pathname.startsWith('/callback')) {
+      const code = url.searchParams.get('code')
+      const error = url.searchParams.get('error')
+      // Accept the code on any path (the registered redirect may land on '/'),
+      // and ignore unrelated requests like favicon.ico.
+      if (!code && !error) {
         res.writeHead(204).end()
         return
       }
-      const code = url.searchParams.get('code')
-      const error = url.searchParams.get('error')
       res.writeHead(code ? 200 : 400, { 'Content-Type': 'text/html' })
       res.end(code ? SUCCESS_HTML : ERROR_HTML)
       server.close()

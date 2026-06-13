@@ -30,8 +30,7 @@ const DEFAULT_REDIRECT_PORT = 53682
 export function loadConfig(env: Env = process.env): Config {
   const endpoint: EndpointPreference = env.ZEN_ENDPOINT === 'app' ? 'app' : 'ru'
 
-  const redirectPort =
-    Number.parseInt(env.ZEN_REDIRECT_PORT ?? '', 10) || DEFAULT_REDIRECT_PORT
+  const { redirectUri, redirectPort } = resolveRedirect(env)
 
   const dataDir =
     env.ZEN_DATA_DIR?.trim() || join(homedir(), '.config', 'zen-money-mcp')
@@ -41,10 +40,32 @@ export function loadConfig(env: Env = process.env): Config {
     clientSecret: env.ZEN_CLIENT_SECRET?.trim() ?? '',
     endpoint,
     redirectPort,
-    redirectUri: `http://localhost:${redirectPort}/callback`,
+    redirectUri,
     dataDir,
     dbPath: join(dataDir, 'cache.sqlite'),
     authPath: join(dataDir, 'auth.json'),
+  }
+}
+
+/**
+ * Resolve the OAuth redirect. ZEN_REDIRECT_URI, when set, is used verbatim and
+ * must exactly match the URI registered for the OAuth app (the local callback
+ * server listens on its port). Otherwise we build http://localhost:<port>/callback.
+ */
+function resolveRedirect(env: Env): { redirectUri: string; redirectPort: number } {
+  const override = env.ZEN_REDIRECT_URI?.trim()
+  if (override) {
+    const url = new URL(override)
+    const port =
+      Number.parseInt(url.port, 10) ||
+      (url.protocol === 'https:' ? 443 : 80)
+    return { redirectUri: override, redirectPort: port }
+  }
+  const redirectPort =
+    Number.parseInt(env.ZEN_REDIRECT_PORT ?? '', 10) || DEFAULT_REDIRECT_PORT
+  return {
+    redirectUri: `http://localhost:${redirectPort}/callback`,
+    redirectPort,
   }
 }
 
