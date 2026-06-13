@@ -1,0 +1,12 @@
+node_modules/
+build/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.local
+auth.json
+
+# Reference clone — not part of this project
+zerro/
