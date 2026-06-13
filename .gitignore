@@ -8,5 +8,8 @@ build/
 .env.local
 auth.json
 
+# Machine-specific MCP host config (absolute paths / possible secrets)
+.mcp.json
+
 # Reference clone — not part of this project
 zerro/
