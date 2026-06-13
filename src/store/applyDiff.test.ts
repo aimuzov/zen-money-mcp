@@ -182,6 +182,36 @@ describe('applyDiff', () => {
     expect(tag).toBeUndefined()
   })
 
+  it('binds missing optional fields as null (real payloads omit them)', () => {
+    // Real ZenMoney transactions omit absent optional fields entirely, so they
+    // arrive as `undefined` rather than `null` — node:sqlite rejects undefined.
+    const sparse = {
+      id: 'sparse',
+      date: '2026-01-01',
+      income: 0,
+      outcome: 100,
+      incomeInstrument: 2,
+      outcomeInstrument: 2,
+      incomeAccount: 'acc',
+      outcomeAccount: 'acc',
+      changed: 1,
+      created: 1,
+      deleted: false,
+      // mcc, merchant, payee, originalPayee, comment, tag, hold all undefined
+    } as unknown as ZmTransaction
+
+    expect(() =>
+      applyDiff(db, { serverTimestamp: 10, transaction: [sparse] })
+    ).not.toThrow()
+
+    const row = db
+      .prepare('select mcc, merchant, payee, comment, tag0 from "transaction" where id = ?')
+      .get('sparse') as Record<string, unknown>
+    expect(row.mcc).toBeNull()
+    expect(row.merchant).toBeNull()
+    expect(row.comment).toBeNull()
+  })
+
   it('updates existing transactions on re-upsert', () => {
     applyDiff(db, baseDiff)
     applyDiff(db, {

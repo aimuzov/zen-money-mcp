@@ -55,7 +55,9 @@ export function buildReviewExpenses(db: Db, input: ReviewInput) {
     from: input.from,
     to: input.to,
     account: input.account,
-  }).filter(t => t.outcome > 0)
+    // Real expenses only: a transfer between own accounts (incl. cash
+    // withdrawals) has income > 0 too and is not a categorizable expense.
+  }).filter(t => t.outcome > 0 && t.income === 0)
 
   const limit = input.limit ?? DEFAULT_LIMIT
   const out: ReturnType<typeof toReviewOut>[] = []

@@ -48,6 +48,27 @@ describe('buildReviewExpenses', () => {
     expect(uncat.status).toBe('uncategorized')
   })
 
+  it('excludes transfers (income > 0) from the expense audit', () => {
+    // A transfer between own accounts (e.g. a cash withdrawal): both income and
+    // outcome are set, no category — it is not a categorizable expense.
+    applyDiff(db, {
+      serverTimestamp: 2,
+      transaction: [
+        makeTx({
+          id: 'transfer',
+          date: '2026-04-22',
+          outcome: 5000,
+          income: 5000,
+          incomeAccount: 'cash',
+          outcomeAccount: 'acc',
+          tag: null,
+        }),
+      ],
+    })
+    const out = buildReviewExpenses(db, { from: '2026-04-01', to: '2026-04-30' })
+    expect(out.expenses.some(e => e.transactionId === 'transfer')).toBe(false)
+  })
+
   it('hides ok expenses by default but includes them on request', () => {
     const def = buildReviewExpenses(db, { from: '2026-04-01', to: '2026-04-30' })
     expect(def.expenses.some(e => e.status === 'ok')).toBe(false)

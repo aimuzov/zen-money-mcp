@@ -1,3 +1,4 @@
+import type { StatementSync } from 'node:sqlite'
 import type { Db } from './db.js'
 import { setMeta } from './db.js'
 import { normalizePayee } from '../analytics/grouping.js'
@@ -23,6 +24,14 @@ export interface ApplyResult {
 const bit = (v: boolean): number => (v ? 1 : 0)
 const bitOrNull = (v: boolean | null | undefined): number | null =>
   v == null ? null : v ? 1 : 0
+
+// Real ZenMoney payloads omit absent optional fields, so values arrive as
+// `undefined`. node:sqlite only binds null/number/bigint/string/Uint8Array, so
+// coerce undefined -> null at the binding boundary.
+function runRow(stmt: StatementSync, values: ReadonlyArray<unknown>): void {
+  const params = values.map(v => (v === undefined ? null : v))
+  stmt.run(...(params as Array<null | number | bigint | string | Uint8Array>))
+}
 
 /** Run a fn inside a SQLite transaction, rolling back on error. */
 function inTransaction<T>(db: Db, fn: () => T): T {
@@ -72,7 +81,7 @@ function upsertInstruments(db: Db, rows: ZmInstrument[]): number {
        rate = excluded.rate, raw = excluded.raw`
   )
   for (const r of rows) {
-    stmt.run(r.id, r.shortTitle, r.symbol, r.rate, JSON.stringify(r))
+    runRow(stmt, [r.id, r.shortTitle, r.symbol, r.rate, JSON.stringify(r)])
   }
   return rows.length
 }
@@ -87,15 +96,15 @@ function upsertAccounts(db: Db, rows: ZmAccount[]): number {
        archive = excluded.archive, raw = excluded.raw`
   )
   for (const r of rows) {
-    stmt.run(
+    runRow(stmt, [
       r.id,
       r.title,
       r.type,
       r.instrument,
       bit(r.inBalance),
       bit(r.archive),
-      JSON.stringify(r)
-    )
+      JSON.stringify(r),
+    ])
   }
   return rows.length
 }
@@ -110,7 +119,7 @@ function upsertTags(db: Db, rows: ZmTag[]): number {
        icon = excluded.icon, color = excluded.color, raw = excluded.raw`
   )
   for (const r of rows) {
-    stmt.run(
+    runRow(stmt, [
       r.id,
       r.title,
       r.parent,
@@ -118,8 +127,8 @@ function upsertTags(db: Db, rows: ZmTag[]): number {
       bit(r.showOutcome),
       r.icon,
       r.color,
-      JSON.stringify(r)
-    )
+      JSON.stringify(r),
+    ])
   }
   return rows.length
 }
@@ -129,7 +138,7 @@ function upsertMerchants(db: Db, rows: ZmMerchant[]): number {
     `INSERT INTO merchant(id, title, raw) VALUES(?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET title = excluded.title, raw = excluded.raw`
   )
-  for (const r of rows) stmt.run(r.id, r.title, JSON.stringify(r))
+  for (const r of rows) runRow(stmt, [r.id, r.title, JSON.stringify(r)])
   return rows.length
 }
 
@@ -143,7 +152,7 @@ function upsertBudgets(db: Db, rows: ZmBudget[]): number {
   )
   for (const r of rows) {
     const id = `${r.date}#${r.tag ?? globalBudgetTagId}`
-    stmt.run(id, r.tag, r.date, r.income, r.outcome, JSON.stringify(r))
+    runRow(stmt, [id, r.tag, r.date, r.income, r.outcome, JSON.stringify(r)])
   }
   return rows.length
 }
@@ -174,9 +183,8 @@ function upsertTransactions(db: Db, rows: ZmTransaction[]): number {
     const tagJson = r.tag ? JSON.stringify(r.tag) : null
     // Fold originalPayee into the same grouping value, so a transaction with
     // only a raw bank string still groups with its peers.
-    const payeeNorm =
-      normalizePayee(r.payee ?? r.originalPayee ?? '') || null
-    stmt.run(
+    const payeeNorm = normalizePayee(r.payee ?? r.originalPayee ?? '') || null
+    runRow(stmt, [
       r.id,
       r.date,
       r.income,
@@ -197,8 +205,8 @@ function upsertTransactions(db: Db, rows: ZmTransaction[]): number {
       bitOrNull(r.hold),
       r.changed,
       r.created,
-      JSON.stringify(r)
-    )
+      JSON.stringify(r),
+    ])
   }
   return rows.length
 }
