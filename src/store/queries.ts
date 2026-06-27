@@ -1,5 +1,5 @@
 import type { Db } from './db.js'
-import type { ZmTransaction } from '../api/types.js'
+import type { ZmAccount, ZmTransaction } from '../api/types.js'
 
 /** A transaction as used by analytics and tools (camelCase, tags parsed). */
 export interface TxRow {
@@ -269,6 +269,23 @@ export function getTransaction(db: Db, id: string): TxRow | undefined {
     .prepare(`SELECT ${TX_COLUMNS} FROM "transaction" WHERE id = ?`)
     .get(id) as RawTxDbRow | undefined
   return row ? mapTxRow(row) : undefined
+}
+
+export interface AccountInfo {
+  id: string
+  title: string
+  instrument: number
+  user: number
+}
+
+/** Account essentials (incl. currency instrument and owning user) for an id. */
+export function getAccount(db: Db, id: string): AccountInfo | undefined {
+  const row = db.prepare('SELECT raw FROM account WHERE id = ?').get(id) as
+    | { raw: string }
+    | undefined
+  if (!row) return undefined
+  const a = JSON.parse(row.raw) as ZmAccount
+  return { id: a.id, title: a.title, instrument: a.instrument, user: a.user }
 }
 
 /** Currency short code (e.g. 'RUB') for an instrument id. */

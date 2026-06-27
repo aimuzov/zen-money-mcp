@@ -206,11 +206,12 @@ export type ZmTransaction = {
   hold: boolean | null
   viewed?: boolean
   qrCode: string | null
-  incomeBankID: CompanyId | null
+  // Bank operation id (e.g. "[ozon][reg]-…"), not a company id.
+  incomeBankID: string | null
   incomeInstrument: InstrumentId
   incomeAccount: AccountId
   income: Units
-  outcomeBankID: CompanyId | null
+  outcomeBankID: string | null
   outcomeInstrument: InstrumentId
   outcomeAccount: AccountId
   outcome: Units

@@ -9,6 +9,7 @@ import { registerFindTransactions } from './tools/findTransactions.js'
 import { registerMerchantHistory } from './tools/merchantHistory.js'
 import { registerReviewExpenses } from './tools/reviewExpenses.js'
 import { registerApplyCategories } from './tools/applyCategories.js'
+import { registerImportStatement } from './tools/importStatement.js'
 
 /** Build a fully-wired MCP server (opens the cache DB and registers all tools). */
 export function createServer(cfg: Config): McpServer {
@@ -23,6 +24,7 @@ export function createServer(cfg: Config): McpServer {
   registerMerchantHistory(server, ctx)
   registerReviewExpenses(server, ctx)
   registerApplyCategories(server, ctx)
+  registerImportStatement(server, ctx)
   return server
 }
 

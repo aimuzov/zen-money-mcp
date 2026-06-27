@@ -8,6 +8,7 @@ import {
   getRawTransaction,
   getInstrumentCode,
   countTransactions,
+  getAccount,
 } from './queries.js'
 import { makeTx, makeTag, RUB, cardAccount } from '../testing/fixtures.js'
 
@@ -97,6 +98,21 @@ describe('getRawTransaction', () => {
 
   it('returns undefined for unknown id', () => {
     expect(getRawTransaction(db, 'nope')).toBeUndefined()
+  })
+})
+
+describe('getAccount', () => {
+  it('returns account info including instrument and user', () => {
+    expect(getAccount(db, 'acc')).toMatchObject({
+      id: 'acc',
+      title: 'Card',
+      instrument: 2,
+      user: 1,
+    })
+  })
+
+  it('returns undefined for unknown id', () => {
+    expect(getAccount(db, 'nope')).toBeUndefined()
   })
 })
 

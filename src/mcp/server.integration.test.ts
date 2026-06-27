@@ -55,12 +55,13 @@ beforeEach(() => {
 })
 
 describe('MCP server (end to end)', () => {
-  it('registers all six tools', async () => {
+  it('registers all tools', async () => {
     const client = await connect(cfg)
     const { tools } = await client.listTools()
     expect(tools.map(t => t.name).sort()).toEqual([
       'zen_apply_categories',
       'zen_find_transactions',
+      'zen_import_statement',
       'zen_list_categories',
       'zen_merchant_history',
       'zen_review_expenses',
