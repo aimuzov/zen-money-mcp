@@ -1,40 +1,72 @@
 {
-  "name": "zen-money-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for ZenMoney: audit and fix transaction categories with historical context",
-  "type": "module",
-  "engines": {
-    "node": ">=24.0.0"
-  },
-  "bin": {
-    "zen-money-mcp": "./build/index.js"
-  },
-  "files": [
-    "build"
-  ],
-  "scripts": {
-    "build": "tsc && chmod +x build/index.js",
-    "dev": "tsc --watch",
-    "start": "node build/index.js",
-    "auth": "node build/index.js auth",
-    "sync": "node build/index.js sync",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.ts\""
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
-    "dotenv": "16.6.1",
-    "open": "11.0.0",
-    "pdfjs-dist": "6.0.227",
-    "zod": "4.4.3"
-  },
-  "devDependencies": {
-    "@types/node": "24.13.2",
-    "prettier": "3.8.4",
-    "typescript": "5.9.3",
-    "vitest": "4.1.8"
-  },
-  "packageManager": "pnpm@11.5.1"
+	"name": "@aimuzov/zen-money-mcp",
+	"version": "0.1.0",
+	"description": "MCP server for ZenMoney: audit and fix transaction categories with historical context, import missing transactions from bank statements",
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"mcp-server",
+		"claude",
+		"zenmoney",
+		"personal-finance",
+		"budgeting"
+	],
+	"homepage": "https://github.com/aimuzov/zen-money-mcp#readme",
+	"bugs": {
+		"url": "https://github.com/aimuzov/zen-money-mcp/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aimuzov/zen-money-mcp.git"
+	},
+	"license": "MIT",
+	"author": "Aleksey Imuzov",
+	"type": "module",
+	"bin": {
+		"zen-money-mcp": "build/index.js"
+	},
+	"files": [
+		"build",
+		".env.example",
+		".mcp.json.example"
+	],
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"engines": {
+		"node": ">=26"
+	},
+	"scripts": {
+		"start": "node --conditions=development src/index.ts",
+		"auth": "node --conditions=development src/index.ts auth",
+		"sync": "node --conditions=development src/index.ts sync",
+		"build": "rm -rf build && tsc -p tsconfig.build.json",
+		"typecheck": "tsc",
+		"test": "node --conditions=development --test 'src/**/*.test.ts'",
+		"format": "oxlint --fix && prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "oxlint --deny-warnings",
+		"prepack": "npm run build"
+	},
+	"imports": {
+		"#zen/*": {
+			"development": "./src/*.ts",
+			"default": "./build/*.js"
+		}
+	},
+	"dependencies": {
+		"@aimuzov/infra-mcp-kit": "github:aimuzov/infra-mcp-kit#v1.0.0",
+		"@modelcontextprotocol/sdk": "1.32.1",
+		"open": "11.0.0",
+		"pdfjs-dist": "6.0.227",
+		"zod": "4.6.7"
+	},
+	"devDependencies": {
+		"@aimuzov/infra-site-kit": "github:aimuzov/infra-site-kit#v4.0.0",
+		"@types/node": "26.6.5",
+		"oxlint": "1.87.0",
+		"prettier": "3.9.9",
+		"typescript": "6.0.3"
+	}
 }

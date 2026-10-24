@@ -1,8 +1,8 @@
-import type { Db } from '../store/db.js'
-import type { Config } from '../config.js'
+import type { Config } from '#zen/config'
+import type { Db } from '#zen/store/db'
 
 /** Shared dependencies passed to every tool's register function. */
-export interface ToolContext {
-  db: Db
-  cfg: Config
+export type ToolContext = {
+	db: Db
+	cfg: Config
 }

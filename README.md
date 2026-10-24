@@ -31,9 +31,7 @@ Claude ──MCP/stdio──▶ zen-money-mcp ──HTTPS──▶ ZenMoney POST
 
 ## Требования
 
-- **Node.js ≥ 24** (используется встроенный модуль `node:sqlite`, нативная
-  компиляция не нужна).
-- **pnpm**.
+- **Node.js ≥ 26** (встроенный модуль `node:sqlite`, нативная компиляция не нужна).
 - OAuth-приложение ZenMoney: зарегистрируйте его на
   [developers.zenmoney.ru](https://developers.zenmoney.ru) (или `.app`) и получите
   `consumer key` / `consumer secret`. В настройках приложения укажите
@@ -43,9 +41,11 @@ Claude ──MCP/stdio──▶ zen-money-mcp ──HTTPS──▶ ZenMoney POST
 ## Установка и сборка
 
 ```bash
-pnpm install
-pnpm build
+npm ci
+npm run build
 ```
+
+После публикации в npm можно и без клона: `npx @aimuzov/zen-money-mcp`.
 
 ## Настройка окружения
 
@@ -62,7 +62,7 @@ ZEN_REDIRECT_PORT=53682    # должен совпадать с redirect URI п�
 ## Авторизация (один раз)
 
 ```bash
-pnpm auth
+npm run auth
 ```
 
 Откроется браузер, вы войдёте в ZenMoney и подтвердите доступ. Токен сохранится в
@@ -72,8 +72,8 @@ pnpm auth
 ## Первая синхронизация
 
 ```bash
-pnpm sync          # инкрементально (или всё с нуля при первом запуске)
-node build/index.js sync --full   # принудительно перетянуть всю историю
+npm run sync                    # инкрементально (или всё с нуля при первом запуске)
+npm run sync -- --full          # принудительно перетянуть всю историю
 ```
 
 ## Подключение в Claude Code
@@ -82,34 +82,35 @@ node build/index.js sync --full   # принудительно перетяну�
 
 ```json
 {
-  "mcpServers": {
-    "zen-money": {
-      "command": "node",
-      "args": ["/absolute/path/to/zen-money-mcp/build/index.js"],
-      "env": {
-        "ZEN_CLIENT_ID": "...",
-        "ZEN_CLIENT_SECRET": "...",
-        "ZEN_ENDPOINT": "ru"
-      }
-    }
-  }
+	"mcpServers": {
+		"zen-money": {
+			"command": "node",
+			"args": ["/absolute/path/to/zen-money-mcp/build/index.js"],
+			"env": {
+				"ZEN_CLIENT_ID": "...",
+				"ZEN_CLIENT_SECRET": "...",
+				"ZEN_ENDPOINT": "ru"
+			}
+		}
+	}
 }
 ```
 
-Авторизацию (`pnpm auth`) всё равно нужно выполнить один раз в терминале — stdio-
+Авторизацию (`npm run auth`) всё равно нужно выполнить один раз в терминале — stdio-
 сервер сам браузер не открывает; если токена нет, инструменты вернут понятную
 подсказку запустить `auth`.
 
 ## Инструменты
 
-| Инструмент | Назначение |
-|---|---|
-| `zen_sync` | Обновить локальный кэш из ZenMoney |
-| `zen_list_categories` | Дерево категорий (тегов) с путями |
+| Инструмент              | Назначение                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `zen_sync`              | Обновить локальный кэш из ZenMoney                                            |
+| `zen_list_categories`   | Дерево категорий (тегов) с путями                                             |
 | `zen_find_transactions` | Гибкий поиск (период, счёт, без категории, «под вопросом», мерчант/payee/MCC) |
-| `zen_merchant_history` | Полный разбор истории по мерчанту/payee/MCC |
-| `zen_review_expenses` | **Аудит**: расходы без категории или с подозрительной категорией + кандидаты |
-| `zen_apply_categories` | Запись изменений (по умолчанию `dryRun` — сначала превью) |
+| `zen_merchant_history`  | Полный разбор истории по мерчанту/payee/MCC                                   |
+| `zen_review_expenses`   | **Аудит**: расходы без категории или с подозрительной категорией + кандидаты  |
+| `zen_apply_categories`  | Запись изменений (по умолчанию `dryRun` — сначала превью)                     |
+| `zen_import_statement`  | Импорт недостающих операций из PDF-выписки Ozon Банка (тоже с `dryRun`)       |
 
 ### Типичный сценарий
 
@@ -122,9 +123,12 @@ Claude вызовет `zen_sync` → `zen_review_expenses` → предложи�
 ## Разработка
 
 ```bash
-pnpm test          # vitest (юнит + интеграционные тесты)
-pnpm typecheck     # tsc --noEmit
-pnpm build         # сборка в build/
+npm start               # сервер на stdio прямо из src/
+npm test                # node --test (юнит + интеграционные тесты)
+npm run typecheck       # tsc
+npm run lint            # oxlint
+npm run format          # oxlint --fix и prettier
+npm run build           # сборка в build/ для npm
 ```
 
 ## Заметки по реализации

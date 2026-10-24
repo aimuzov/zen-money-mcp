@@ -1,5 +1,6 @@
-node_modules/
-build/
+node_modules
+build
+*.tgz
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
@@ -8,8 +9,8 @@ build/
 .env.local
 auth.json
 
-# Machine-specific MCP host config (absolute paths / possible secrets)
+# Конфиг MCP-хоста с абсолютными путями и, возможно, секретами.
 .mcp.json
 
-# Reference clone — not part of this project
+# Референсный клон, не часть проекта.
 zerro/
