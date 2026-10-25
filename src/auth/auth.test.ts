@@ -52,6 +52,7 @@ describe('token store', () => {
 
 	it('битый JSON не выдаётся за отсутствие токена', () => {
 		writeFileSync(cfg.authPath, '{not json')
+
 		assert.throws(
 			() => readToken(cfg),
 			(err: Error) => err.message.includes(cfg.authPath),
@@ -60,6 +61,7 @@ describe('token store', () => {
 
 	it('ошибка чтения файла пробрасывается с путём', () => {
 		mkdirSync(cfg.authPath)
+
 		assert.throws(
 			() => readToken(cfg),
 			(err: Error) => err.message.includes(cfg.authPath),
@@ -78,7 +80,7 @@ describe('getValidAccessToken', () => {
 		const fetchImpl = (async () => {
 			called = true
 
-			return { json: async () => ({}) }
+			return Response.json({})
 		}) as unknown as typeof fetch
 
 		const token = await getValidAccessToken(cfg, { now: 9_000, fetchImpl })
@@ -93,13 +95,11 @@ describe('getValidAccessToken', () => {
 		const fetchImpl = (async (_url: string, init: RequestInit) => {
 			body = JSON.parse(init.body as string)
 
-			return {
-				json: async () => ({
-					access_token: 'access-2',
-					refresh_token: 'refresh-2',
-					expires_in: 3600,
-				}),
-			}
+			return Response.json({
+				access_token: 'access-2',
+				refresh_token: 'refresh-2',
+				expires_in: 3600,
+			})
 		}) as unknown as typeof fetch
 
 		const token = await getValidAccessToken(cfg, { now: 20_000, fetchImpl })

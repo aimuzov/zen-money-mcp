@@ -20,7 +20,7 @@ function fetchReturning(diff: ZmDiff) {
 	const fakeFetch = async (_url: string | URL, init?: RequestInit) => {
 		calls.push({ body: JSON.parse(init!.body as string) })
 
-		return { json: async () => diff }
+		return Response.json(diff)
 	}
 
 	return { fakeFetch: fakeFetch as unknown as typeof fetch, calls }
