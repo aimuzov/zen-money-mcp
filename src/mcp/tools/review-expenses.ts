@@ -1,5 +1,5 @@
 import { json } from '@aimuzov/infra-mcp-kit'
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { McpServer } from '@aimuzov/infra-mcp-kit'
 import { z } from 'zod'
 
 import { getCategoryHistoryFor } from '#zen/analytics/history'
