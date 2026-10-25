@@ -13,8 +13,6 @@ import { sync } from './store/sync.ts'
 // Both src/ and build/ sit one level below the root.
 loadEnvFile(fileURLToPath(new URL('../.env', import.meta.url)))
 
-const cfg = loadConfig()
-
 await runCli({
 	name: 'zen-money-mcp',
 	version: readVersion(import.meta.url),
@@ -30,12 +28,14 @@ Environment:
   ZEN_REDIRECT_PORT                 OAuth callback port, default 53682
   ZEN_REDIRECT_URI                  full callback URI when the app registers another one
   ZEN_DATA_DIR                      cache and token, default ~/.config/zen-money-mcp`,
-	stdio: () => createServer(cfg),
+	stdio: () => createServer(loadConfig()),
 	commands: {
 		auth: async () => {
-			await runAuthFlow(cfg)
+			await runAuthFlow(loadConfig())
 		},
 		sync: async (args) => {
+			const cfg = loadConfig()
+
 			ensureDataDir(cfg)
 
 			const db = openDb(cfg.dbPath)
