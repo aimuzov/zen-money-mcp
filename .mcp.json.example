@@ -1,13 +1,13 @@
 {
-  "mcpServers": {
-    "zen-money": {
-      "command": "node",
-      "args": ["/absolute/path/to/zen-money-mcp/build/index.js"],
-      "env": {
-        "ZEN_CLIENT_ID": "your-consumer-key",
-        "ZEN_CLIENT_SECRET": "your-consumer-secret",
-        "ZEN_ENDPOINT": "ru"
-      }
-    }
-  }
+	"mcpServers": {
+		"zen-money": {
+			"command": "npx",
+			"args": ["-y", "@aimuzov/zen-money-mcp"],
+			"env": {
+				"ZEN_CLIENT_ID": "your-consumer-key",
+				"ZEN_CLIENT_SECRET": "your-consumer-secret",
+				"ZEN_ENDPOINT": "ru"
+			}
+		}
+	}
 }

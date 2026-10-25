@@ -1,46 +1,52 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { openDb, getMeta, type Db } from './db.js'
-import { applyDiff } from './applyDiff.js'
-import { sync } from './sync.js'
-import { makeTx } from '../testing/fixtures.js'
-import type { ZmDiff } from '../api/types.js'
+import assert from 'node:assert/strict'
+import { beforeEach, describe, it } from 'node:test'
+
+import type { ZmDiff } from '#zen/api/types'
+import { makeTx } from '#zen/testing/fixtures'
+
+import { applyDiff } from './apply-diff.ts'
+import { getMeta, openDb, type Db } from './db.ts'
+import { sync } from './sync.ts'
 
 let db: Db
 
 beforeEach(() => {
-  db = openDb(':memory:')
-  applyDiff(db, { serverTimestamp: 100 })
+	db = openDb(':memory:')
+	applyDiff(db, { serverTimestamp: 100 })
 })
 
 function fetchReturning(diff: ZmDiff) {
-  const calls: Array<{ body: any }> = []
-  const fakeFetch = async (_url: string | URL, init?: RequestInit) => {
-    calls.push({ body: JSON.parse(init!.body as string) })
-    return { json: async () => diff }
-  }
-  return { fakeFetch: fakeFetch as unknown as typeof fetch, calls }
+	const calls: Array<{ body: any }> = []
+	const fakeFetch = async (_url: string | URL, init?: RequestInit) => {
+		calls.push({ body: JSON.parse(init!.body as string) })
+
+		return { json: async () => diff }
+	}
+
+	return { fakeFetch: fakeFetch as unknown as typeof fetch, calls }
 }
 
 describe('sync', () => {
-  it('sends the stored serverTimestamp and applies the returned diff', async () => {
-    const { fakeFetch, calls } = fetchReturning({
-      serverTimestamp: 200,
-      transaction: [makeTx({ id: 'fresh', outcome: 50 })],
-    })
+	it('sends the stored serverTimestamp and applies the returned diff', async () => {
+		const { fakeFetch, calls } = fetchReturning({
+			serverTimestamp: 200,
+			transaction: [makeTx({ id: 'fresh', outcome: 50 })],
+		})
 
-    const result = await sync(db, 'tok', 'ru', { fetchImpl: fakeFetch })
+		const result = await sync(db, 'tok', 'ru', { fetchImpl: fakeFetch })
 
-    expect(calls[0].body.serverTimestamp).toBe(100)
-    expect(result.from).toBe(100)
-    expect(result.to).toBe(200)
-    expect(result.added).toBe(1)
-    expect(getMeta(db, 'serverTimestamp')).toBe('200')
-    expect(getMeta(db, 'lastSyncAt')).toBeDefined()
-  })
+		assert.equal(calls[0]!.body.serverTimestamp, 100)
+		assert.equal(result.from, 100)
+		assert.equal(result.to, 200)
+		assert.equal(result.added, 1)
+		assert.equal(getMeta(db, 'serverTimestamp'), '200')
+		assert.notEqual(getMeta(db, 'lastSyncAt'), undefined)
+	})
 
-  it('full sync resets the cursor to 0', async () => {
-    const { fakeFetch, calls } = fetchReturning({ serverTimestamp: 300 })
-    await sync(db, 'tok', 'ru', { full: true, fetchImpl: fakeFetch })
-    expect(calls[0].body.serverTimestamp).toBe(0)
-  })
+	it('full sync resets the cursor to 0', async () => {
+		const { fakeFetch, calls } = fetchReturning({ serverTimestamp: 300 })
+
+		await sync(db, 'tok', 'ru', { full: true, fetchImpl: fakeFetch })
+		assert.equal(calls[0]!.body.serverTimestamp, 0)
+	})
 })

@@ -63,23 +63,26 @@ CREATE INDEX IF NOT EXISTS ix_tx_date_outcome ON "transaction"(date, outcome);
 
 /** Open (or create) the cache database and ensure the schema exists. */
 export function openDb(path: string): Db {
-  const db = new DatabaseSync(path)
-  if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL')
-  db.exec(SCHEMA)
-  return db
+	const db = new DatabaseSync(path)
+
+	if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL')
+
+	db.exec(SCHEMA)
+
+	return db
 }
 
 /** Read a value from the meta key/value table. */
 export function getMeta(db: Db, key: string): string | undefined {
-  const row = db.prepare('SELECT value FROM meta WHERE key = ?').get(key) as
-    | { value: string }
-    | undefined
-  return row?.value
+	const row = db.prepare('SELECT value FROM meta WHERE key = ?').get(key) as { value: string } | undefined
+
+	return row?.value
 }
 
 /** Write a value into the meta key/value table. */
 export function setMeta(db: Db, key: string, value: string): void {
-  db.prepare(
-    'INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
-  ).run(key, value)
+	db.prepare('INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(
+		key,
+		value,
+	)
 }

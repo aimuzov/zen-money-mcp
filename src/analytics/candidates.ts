@@ -1,14 +1,14 @@
-import type { TxRow } from '../store/queries.js'
+import type { TxRow } from '#zen/store/queries'
 
-export interface Candidate {
-  tagId: string
-  /** Context-weighted score (0..1) with a small-sample penalty applied. */
-  confidence: number
-  /** Raw frequency of this category in the history (0..1). */
-  share: number
-  /** Number of past transactions with this category. */
-  count: number
-  reason: string
+export type Candidate = {
+	tagId: string
+	/** Context-weighted score (0..1) with a small-sample penalty applied. */
+	confidence: number
+	/** Raw frequency of this category in the history (0..1). */
+	share: number
+	/** Number of past transactions with this category. */
+	count: number
+	reason: string
 }
 
 // Tunable weights — kept together so the behavior is easy to reason about.
@@ -21,49 +21,57 @@ const SAMPLE_K = 2 // small-sample penalty: count / (count + K)
 const MIN_SAMPLES_FOR_BUCKETS = 6
 
 type Bucket = 'low' | 'mid' | 'high' | 'all'
-interface Thresholds {
-  t1: number
-  t2: number
+type Thresholds = {
+	t1: number
+	t2: number
 }
 
 function weekdayOf(isoDate: string): number {
-  return new Date(`${isoDate}T00:00:00Z`).getUTCDay()
+	return new Date(`${isoDate}T00:00:00Z`).getUTCDay()
 }
 
 function daysBetween(a: string, b: string): number {
-  const ms = Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`))
-  return ms / 86_400_000
+	const ms = Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`))
+
+	return ms / 86_400_000
 }
 
 function quantile(sortedAsc: number[], q: number): number {
-  if (sortedAsc.length === 0) return 0
-  const pos = (sortedAsc.length - 1) * q
-  const base = Math.floor(pos)
-  const rest = pos - base
-  const next = sortedAsc[base + 1]
-  return next !== undefined
-    ? sortedAsc[base] + rest * (next - sortedAsc[base])
-    : sortedAsc[base]
+	if (sortedAsc.length === 0) return 0
+
+	const pos = (sortedAsc.length - 1) * q
+	const base = Math.floor(pos)
+	const rest = pos - base
+	const at = sortedAsc[base] ?? 0
+	const next = sortedAsc[base + 1]
+
+	return next !== undefined ? at + rest * (next - at) : at
 }
 
 function amountThresholds(history: TxRow[]): Thresholds | null {
-  if (history.length < MIN_SAMPLES_FOR_BUCKETS) return null
-  const sorted = history.map(h => h.outcome).sort((a, b) => a - b)
-  const t1 = quantile(sorted, 1 / 3)
-  const t2 = quantile(sorted, 2 / 3)
-  if (t1 === t2) return null // degenerate (all similar) — disable amount weighting
-  return { t1, t2 }
+	if (history.length < MIN_SAMPLES_FOR_BUCKETS) return null
+
+	const sorted = history.map((h) => h.outcome).sort((a, b) => a - b)
+	const t1 = quantile(sorted, 1 / 3)
+	const t2 = quantile(sorted, 2 / 3)
+
+	if (t1 === t2) return null // degenerate (all similar) — disable amount weighting
+
+	return { t1, t2 }
 }
 
 function bucketOf(outcome: number, thr: Thresholds | null): Bucket {
-  if (!thr) return 'all'
-  if (outcome <= thr.t1) return 'low'
-  if (outcome <= thr.t2) return 'mid'
-  return 'high'
+	if (!thr) return 'all'
+
+	if (outcome <= thr.t1) return 'low'
+
+	if (outcome <= thr.t2) return 'mid'
+
+	return 'high'
 }
 
 function pct(x: number): string {
-  return `${Math.round(x * 100)}%`
+	return `${Math.round(x * 100)}%`
 }
 
 /**
@@ -74,48 +82,51 @@ function pct(x: number): string {
  * confidence (highest first). Pure: no IO.
  */
 export function rankCandidates(tx: TxRow, history: TxRow[]): Candidate[] {
-  if (history.length === 0) return []
+	if (history.length === 0) return []
 
-  const reviewWeekday = weekdayOf(tx.date)
-  const thresholds = amountThresholds(history)
-  const reviewBucket = bucketOf(tx.outcome, thresholds)
+	const reviewWeekday = weekdayOf(tx.date)
+	const thresholds = amountThresholds(history)
+	const reviewBucket = bucketOf(tx.outcome, thresholds)
 
-  const scoreByTag = new Map<string, number>()
-  const countByTag = new Map<string, number>()
-  let totalScore = 0
+	const scoreByTag = new Map<string, number>()
+	const countByTag = new Map<string, number>()
+	let totalScore = 0
 
-  for (const h of history) {
-    const tag = h.tag0
-    if (!tag) continue
+	for (const h of history) {
+		const tag = h.tag0
 
-    const wRecency = Math.exp(-daysBetween(h.date, tx.date) / HALFLIFE_DAYS)
-    const wWeekday = weekdayOf(h.date) === reviewWeekday ? WEEKDAY_MATCH : WEEKDAY_MISS
-    const wAmount =
-      bucketOf(h.outcome, thresholds) === reviewBucket ? AMOUNT_MATCH : AMOUNT_MISS
-    const score = wRecency * wWeekday * wAmount
+		if (!tag) continue
 
-    scoreByTag.set(tag, (scoreByTag.get(tag) ?? 0) + score)
-    countByTag.set(tag, (countByTag.get(tag) ?? 0) + 1)
-    totalScore += score
-  }
+		const wRecency = Math.exp(-daysBetween(h.date, tx.date) / HALFLIFE_DAYS)
+		const wWeekday = weekdayOf(h.date) === reviewWeekday ? WEEKDAY_MATCH : WEEKDAY_MISS
+		const wAmount = bucketOf(h.outcome, thresholds) === reviewBucket ? AMOUNT_MATCH : AMOUNT_MISS
+		const score = wRecency * wWeekday * wAmount
 
-  const total = history.length
-  const candidates: Candidate[] = []
-  for (const [tagId, score] of scoreByTag) {
-    const count = countByTag.get(tagId) ?? 0
-    const weighted = totalScore > 0 ? score / totalScore : 0
-    const penalty = count / (count + SAMPLE_K)
-    const confidence = weighted * penalty
-    const share = count / total
-    candidates.push({
-      tagId,
-      confidence,
-      share,
-      count,
-      reason: `${count}/${total} past purchases here (${pct(share)}); weighted confidence ${pct(confidence)}`,
-    })
-  }
+		scoreByTag.set(tag, (scoreByTag.get(tag) ?? 0) + score)
+		countByTag.set(tag, (countByTag.get(tag) ?? 0) + 1)
+		totalScore += score
+	}
 
-  candidates.sort((a, b) => b.confidence - a.confidence)
-  return candidates
+	const total = history.length
+	const candidates: Candidate[] = []
+
+	for (const [tagId, score] of scoreByTag) {
+		const count = countByTag.get(tagId) ?? 0
+		const weighted = totalScore > 0 ? score / totalScore : 0
+		const penalty = count / (count + SAMPLE_K)
+		const confidence = weighted * penalty
+		const share = count / total
+
+		candidates.push({
+			tagId,
+			confidence,
+			share,
+			count,
+			reason: `${count}/${total} past purchases here (${pct(share)}); weighted confidence ${pct(confidence)}`,
+		})
+	}
+
+	candidates.sort((a, b) => b.confidence - a.confidence)
+
+	return candidates
 }
