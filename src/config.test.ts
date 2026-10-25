@@ -37,3 +37,32 @@ describe('loadConfig redirect handling', () => {
 		assert.equal(cfg.clientSecret, 'secret')
 	})
 })
+
+describe('loadConfig: проверка переменных окружения', () => {
+	it('пустые значения дают дефолты', () => {
+		const cfg = loadConfig({ ZEN_ENDPOINT: ' ', ZEN_REDIRECT_PORT: '', ZEN_REDIRECT_URI: '' })
+
+		assert.equal(cfg.endpoint, 'ru')
+		assert.equal(cfg.redirectPort, 53682)
+	})
+
+	it('ZEN_ENDPOINT принимается без учёта регистра', () => {
+		assert.equal(loadConfig({ ZEN_ENDPOINT: 'App' }).endpoint, 'app')
+	})
+
+	it('мусор в ZEN_ENDPOINT даёт ошибку с именем переменной', () => {
+		assert.throws(() => loadConfig({ ZEN_ENDPOINT: 'eu' }), /ZEN_ENDPOINT.*eu/)
+	})
+
+	for (const value of ['abc', '3000abc', '0', '70000', '-1']) {
+		it(`ZEN_REDIRECT_PORT=${value} даёт ошибку с именем переменной`, () => {
+			assert.throws(() => loadConfig({ ZEN_REDIRECT_PORT: value }), /ZEN_REDIRECT_PORT/)
+		})
+	}
+
+	for (const value of ['not a url', 'localhost:3000', 'ftp://localhost/cb']) {
+		it(`ZEN_REDIRECT_URI=${value} даёт ошибку с именем переменной`, () => {
+			assert.throws(() => loadConfig({ ZEN_REDIRECT_URI: value }), /ZEN_REDIRECT_URI/)
+		})
+	}
+})

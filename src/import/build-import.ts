@@ -2,6 +2,7 @@ import type { ZmTransaction } from '#zen/api/types'
 import type { Db } from '#zen/store/db'
 import { findTransactions } from '#zen/store/queries'
 
+import { importTransactionId } from './import-id.ts'
 import type { StatementOp } from './ozon-statement.ts'
 
 export type BuildImportInput = {
@@ -9,7 +10,8 @@ export type BuildImportInput = {
 	instrument: number
 	user: number
 	now: number
-	newId: () => string
+	/** По умолчанию importTransactionId: повтор импорта даёт те же id. */
+	newId?: (op: StatementOp, index: number) => string
 }
 
 export type ImportPlan = {
@@ -50,7 +52,7 @@ export function buildImportPlan(db: Db, ops: StatementOp[], input: BuildImportIn
 		skippedRepayments: [],
 	}
 
-	for (const op of ops) {
+	for (const [index, op] of ops.entries()) {
 		if (op.kind === 'repayment') {
 			plan.skippedRepayments.push(op)
 			continue
@@ -65,19 +67,26 @@ export function buildImportPlan(db: Db, ops: StatementOp[], input: BuildImportIn
 			continue
 		}
 
-		plan.create.push(toTransaction(op, input, payeeMerchant))
+		const id = input.newId ? input.newId(op, index) : importTransactionId(input.accountId, op, index)
+
+		plan.create.push(toTransaction(op, id, input, payeeMerchant))
 	}
 
 	return plan
 }
 
-function toTransaction(op: StatementOp, input: BuildImportInput, payeeMerchant: Map<string, string>): ZmTransaction {
+function toTransaction(
+	op: StatementOp,
+	id: string,
+	input: BuildImportInput,
+	payeeMerchant: Map<string, string>,
+): ZmTransaction {
 	const moneyIn = op.signed > 0
 	const bankID = `[ozon-stmt]-${op.documentId}`
 	const merchant = op.payee ? (payeeMerchant.get(op.payee) ?? null) : null
 
 	return {
-		id: input.newId(),
+		id,
 		user: input.user,
 		date: op.date,
 		changed: input.now,

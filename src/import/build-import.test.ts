@@ -127,4 +127,27 @@ describe('buildImportPlan', () => {
 
 		assert.equal(plan.create[0]!.merchant, 'm-fasol')
 	})
+
+	it('без newId id детерминирован и похож на UUID', () => {
+		const { newId: _, ...noId } = input()
+		const ops = [op({ documentId: 'D1' }), op({ documentId: 'D1' })]
+		const first = buildImportPlan(db, ops, noId).create.map((t) => t.id)
+		const again = buildImportPlan(db, ops, noId).create.map((t) => t.id)
+
+		assert.deepEqual(again, first)
+		// одинаковые ряды различаются индексом в выписке
+		assert.notEqual(first[0], first[1])
+
+		for (const id of first) {
+			assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+		}
+	})
+
+	it('id зависит от счёта', () => {
+		const { newId: _, ...noId } = input()
+		const [a] = buildImportPlan(db, [op({})], noId).create
+		const [b] = buildImportPlan(db, [op({})], { ...noId, accountId: 'other' }).create
+
+		assert.notEqual(a!.id, b!.id)
+	})
 })

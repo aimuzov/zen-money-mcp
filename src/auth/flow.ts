@@ -5,6 +5,7 @@ import { endpoints } from '#zen/api/endpoints'
 import type { Config } from '#zen/config'
 
 import { writeToken, type StoredToken } from './store.ts'
+import { readTokenResponse } from './token-response.ts'
 
 const CALLBACK_TIMEOUT_MS = 120_000
 
@@ -15,7 +16,7 @@ const ERROR_HTML = `<!doctype html><html><body style="font-family:sans-serif;tex
 <h2>Authorization failed</h2><p>Check the terminal for details.</p></body></html>`
 
 /** Wait for ZenMoney to redirect back with an authorization code. */
-function waitForAuthCode(cfg: Config): Promise<string> {
+export function waitForAuthCode(cfg: Config): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const server = createServer((req, res) => {
 			const url = new URL(req.url ?? '/', cfg.redirectUri)
@@ -44,8 +45,30 @@ function waitForAuthCode(cfg: Config): Promise<string> {
 			reject(new Error('Timed out waiting for authorization (120s).'))
 		}, CALLBACK_TIMEOUT_MS)
 
+		// Без обработчика 'error' занятый порт роняет процесс uncaught exception.
+		server.on('error', (err: NodeJS.ErrnoException) => {
+			clearTimeout(timer)
+			reject(listenError(cfg, err))
+		})
+
 		server.listen(cfg.redirectPort, '127.0.0.1')
 	})
+}
+
+function listenError(cfg: Config, err: NodeJS.ErrnoException): Error {
+	const where = `127.0.0.1:${cfg.redirectPort}`
+
+	if (err.code !== 'EADDRINUSE' && err.code !== 'EACCES') {
+		return new Error(`Cannot start the OAuth callback server on ${where}: ${err.message}`, { cause: err })
+	}
+
+	const reason = err.code === 'EADDRINUSE' ? 'is already in use' : 'is not allowed'
+
+	return new Error(
+		`OAuth callback port ${where} ${reason}. Free it or choose another one with ZEN_REDIRECT_PORT ` +
+			'(or ZEN_REDIRECT_URI), and register the same redirect URI in the ZenMoney app.',
+		{ cause: err },
+	)
 }
 
 /** Exchange an authorization code for an access token. */
@@ -61,16 +84,7 @@ async function exchangeCode(cfg: Config, code: string): Promise<StoredToken> {
 			code,
 		}),
 	})
-	const data = (await response.json()) as {
-		access_token?: string
-		refresh_token?: string
-		expires_in?: number
-		error?: unknown
-	}
-
-	if (!data.access_token) {
-		throw new Error(`Token exchange failed: ${JSON.stringify(data.error ?? data)}`)
-	}
+	const data = await readTokenResponse(response, 'Token exchange')
 
 	return {
 		access_token: data.access_token,

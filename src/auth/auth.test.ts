@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, statSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, it } from 'node:test'
@@ -49,6 +49,24 @@ describe('token store', () => {
 	it('returns undefined when no token file exists', () => {
 		assert.equal(readToken(cfg), undefined)
 	})
+
+	it('битый JSON не выдаётся за отсутствие токена', () => {
+		writeFileSync(cfg.authPath, '{not json')
+
+		assert.throws(
+			() => readToken(cfg),
+			(err: Error) => err.message.includes(cfg.authPath),
+		)
+	})
+
+	it('ошибка чтения файла пробрасывается с путём', () => {
+		mkdirSync(cfg.authPath)
+
+		assert.throws(
+			() => readToken(cfg),
+			(err: Error) => err.message.includes(cfg.authPath),
+		)
+	})
 })
 
 describe('getValidAccessToken', () => {
@@ -62,7 +80,7 @@ describe('getValidAccessToken', () => {
 		const fetchImpl = (async () => {
 			called = true
 
-			return { json: async () => ({}) }
+			return Response.json({})
 		}) as unknown as typeof fetch
 
 		const token = await getValidAccessToken(cfg, { now: 9_000, fetchImpl })
@@ -77,13 +95,11 @@ describe('getValidAccessToken', () => {
 		const fetchImpl = (async (_url: string, init: RequestInit) => {
 			body = JSON.parse(init.body as string)
 
-			return {
-				json: async () => ({
-					access_token: 'access-2',
-					refresh_token: 'refresh-2',
-					expires_in: 3600,
-				}),
-			}
+			return Response.json({
+				access_token: 'access-2',
+				refresh_token: 'refresh-2',
+				expires_in: 3600,
+			})
 		}) as unknown as typeof fetch
 
 		const token = await getValidAccessToken(cfg, { now: 20_000, fetchImpl })
@@ -103,10 +119,37 @@ describe('getValidAccessToken', () => {
 
 	it('throws NotAuthenticatedError when refresh fails', async () => {
 		writeToken(cfg, baseToken)
-		const fetchImpl = (async () => ({
-			json: async () => ({ error: 'invalid_grant' }),
-		})) as unknown as typeof fetch
+		const fetchImpl = (async () =>
+			Response.json({ error: 'invalid_grant' }, { status: 400 })) as unknown as typeof fetch
 
 		await assert.rejects(getValidAccessToken(cfg, { now: 20_000, fetchImpl }), NotAuthenticatedError)
 	})
+
+	it('invalid_grant даже с кодом 200 требует перелогина', async () => {
+		writeToken(cfg, baseToken)
+		const fetchImpl = (async () => Response.json({ error: 'invalid_grant' })) as unknown as typeof fetch
+
+		await assert.rejects(getValidAccessToken(cfg, { now: 20_000, fetchImpl }), NotAuthenticatedError)
+	})
+
+	const transient: [string, () => Response, RegExp][] = [
+		['5xx', () => new Response('upstream down', { status: 503 }), /HTTP 503.*upstream down/],
+		['HTML с кодом 200', () => new Response('<html>maintenance</html>'), /HTTP 200.*maintenance/],
+		['ответ без access_token', () => Response.json({ error: 'server_error' }), /HTTP 200.*server_error/],
+	]
+
+	for (const [name, respond, message] of transient) {
+		it(`временный сбой refresh (${name}) не требует перелогина`, async () => {
+			writeToken(cfg, baseToken)
+			const fetchImpl = (async () => respond()) as unknown as typeof fetch
+
+			await assert.rejects(
+				getValidAccessToken(cfg, { now: 20_000, fetchImpl }),
+				(err: Error) => !(err instanceof NotAuthenticatedError) && message.test(err.message),
+			)
+
+			// токен не тронут
+			assert.equal(readToken(cfg)!.refresh_token, 'refresh-1')
+		})
+	}
 })

@@ -62,7 +62,7 @@ describe('applyChanges', () => {
 				transaction: body.transaction,
 			}
 
-			return { json: async () => echo }
+			return Response.json(echo)
 		}) as unknown as typeof fetch
 
 		const result = await applyChanges(db, 'ru', [{ transactionId: 't1', tagId: 'beer' }], 'tok', fakeFetch)
@@ -80,12 +80,29 @@ describe('applyChanges', () => {
 		const fakeFetch = (async (_url: string, init: RequestInit) => {
 			const body = JSON.parse(init.body as string)
 
-			return { json: async () => ({ serverTimestamp: 99, transaction: body.transaction }) }
+			return Response.json({ serverTimestamp: 99, transaction: body.transaction })
 		}) as unknown as typeof fetch
 
 		const result = await applyChanges(db, 'ru', [{ transactionId: 'nope', tagId: 'beer' }], 'tok', fakeFetch)
 
 		assert.equal(result.applied, 0)
 		assert.deepEqual(result.skipped, ['nope'])
+	})
+
+	it('если запись прошла, а кэш не обновился, отвечает успехом с предупреждением', async () => {
+		const fakeFetch = (async (_url: string, init: RequestInit) => {
+			const body = JSON.parse(init.body as string)
+
+			// ZenMoney запись принял, а локальная база к этому моменту недоступна
+			db.close()
+
+			return Response.json({ serverTimestamp: 99, transaction: body.transaction })
+		}) as unknown as typeof fetch
+
+		const result = await applyChanges(db, 'ru', [{ transactionId: 't1', tagId: 'beer' }], 'tok', fakeFetch)
+
+		assert.equal(result.applied, 1)
+		assert.equal(result.serverTimestamp, 99)
+		assert.match(result.warning!, /Saved to ZenMoney.*zen_sync/)
 	})
 })
