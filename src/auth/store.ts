@@ -11,12 +11,16 @@ export type StoredToken = {
 	endpoint: EndpointPreference
 }
 
-/** Read the persisted token, or undefined if missing/unreadable. */
+/** Read the persisted token, or undefined if the file does not exist. */
 export function readToken(cfg: Config): StoredToken | undefined {
 	try {
 		return JSON.parse(readFileSync(cfg.authPath, 'utf8')) as StoredToken
-	} catch {
-		return undefined
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+
+		const reason = err instanceof Error ? err.message : String(err)
+
+		throw new Error(`Cannot read token file ${cfg.authPath}: ${reason}`, { cause: err })
 	}
 }
 

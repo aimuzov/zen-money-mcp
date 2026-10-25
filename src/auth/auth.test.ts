@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, statSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, it } from 'node:test'
@@ -48,6 +48,22 @@ describe('token store', () => {
 
 	it('returns undefined when no token file exists', () => {
 		assert.equal(readToken(cfg), undefined)
+	})
+
+	it('битый JSON не выдаётся за отсутствие токена', () => {
+		writeFileSync(cfg.authPath, '{not json')
+		assert.throws(
+			() => readToken(cfg),
+			(err: Error) => err.message.includes(cfg.authPath),
+		)
+	})
+
+	it('ошибка чтения файла пробрасывается с путём', () => {
+		mkdirSync(cfg.authPath)
+		assert.throws(
+			() => readToken(cfg),
+			(err: Error) => err.message.includes(cfg.authPath),
+		)
 	})
 })
 
