@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.3...v1.0.4) (2026-10-25)
+
+
+### Bug Fixes
+
+* **deps:** move to infra-mcp-kit 3.0 on tmcp ([1cef390](https://github.com/aimuzov/zen-money-mcp/commit/1cef3901c3134addfc9be7ab51564d15983ab7d9))
+* **deps:** move to infra-mcp-kit 3.0 on tmcp ([0617824](https://github.com/aimuzov/zen-money-mcp/commit/061782457f88a410d2a0e987792b0388f53d9086))
+
 ## [1.0.3](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.2...v1.0.3) (2026-10-25)
 
 
