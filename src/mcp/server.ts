@@ -1,5 +1,4 @@
-import { readVersion } from '@aimuzov/infra-mcp-kit'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { McpServer, readVersion } from '@aimuzov/infra-mcp-kit'
 
 import { ensureDataDir, type Config } from '#zen/config'
 import { openDb } from '#zen/store/db'

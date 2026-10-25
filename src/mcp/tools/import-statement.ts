@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { failure, json } from '@aimuzov/infra-mcp-kit'
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { McpServer } from '@aimuzov/infra-mcp-kit'
 import { z } from 'zod'
 
 import { getValidAccessToken, NotAuthenticatedError } from '#zen/auth/index'
