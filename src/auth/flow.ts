@@ -72,8 +72,8 @@ function listenError(cfg: Config, err: NodeJS.ErrnoException): Error {
 }
 
 /** Exchange an authorization code for an access token. */
-async function exchangeCode(cfg: Config, code: string): Promise<StoredToken> {
-	const response = await fetch(endpoints[cfg.endpoint].token, {
+async function exchangeCode(cfg: Config, code: string, fetchImpl: typeof fetch): Promise<StoredToken> {
+	const response = await fetchImpl(endpoints[cfg.endpoint].token, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
@@ -94,12 +94,19 @@ async function exchangeCode(cfg: Config, code: string): Promise<StoredToken> {
 	}
 }
 
+export type AuthFlowOptions = {
+	/** Injectable browser opener, for testing. */
+	openUrl?: (url: string) => Promise<unknown>
+	/** Injectable fetch for the token exchange, for testing. */
+	fetchImpl?: typeof fetch
+}
+
 /**
  * Run the full interactive OAuth flow: open the browser, catch the redirect on
  * a local callback server, exchange the code, and persist the token.
  * Intended to be invoked once via `zen-money-mcp auth`.
  */
-export async function runAuthFlow(cfg: Config): Promise<StoredToken> {
+export async function runAuthFlow(cfg: Config, opts: AuthFlowOptions = {}): Promise<StoredToken> {
 	if (!cfg.clientId || !cfg.clientSecret) {
 		throw new Error(
 			'Missing ZEN_CLIENT_ID / ZEN_CLIENT_SECRET. Register an app at https://developers.zenmoney.ru and set them in the environment.',
@@ -114,12 +121,12 @@ export async function runAuthFlow(cfg: Config): Promise<StoredToken> {
 	console.error(`Opening browser for ZenMoney authorization...`)
 	console.error(`If it does not open, visit:\n${authUrl}\n`)
 
-	await open(authUrl).catch(() => {
+	await (opts.openUrl ?? open)(authUrl).catch(() => {
 		/* headless: user uses the printed URL */
 	})
 
 	const code = await waitForAuthCode(cfg)
-	const token = await exchangeCode(cfg, code)
+	const token = await exchangeCode(cfg, code, opts.fetchImpl ?? fetch)
 
 	writeToken(cfg, token)
 	console.error('✓ Authorized. Token saved.')
