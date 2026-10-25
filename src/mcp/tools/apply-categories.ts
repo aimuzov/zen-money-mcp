@@ -3,11 +3,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
 import type { EndpointPreference } from '#zen/api/endpoints'
-import { fetchDiff } from '#zen/api/fetch-diff'
 import { getValidAccessToken, NotAuthenticatedError } from '#zen/auth/index'
 import type { ToolContext } from '#zen/mcp/context'
 import { Presenter } from '#zen/mcp/format'
-import { applyDiff } from '#zen/store/apply-diff'
+import { pushDiff } from '#zen/mcp/push-diff'
 import type { Db } from '#zen/store/db'
 import { getMeta } from '#zen/store/db'
 import { getRawTransaction, getTransaction } from '#zen/store/queries'
@@ -51,6 +50,7 @@ export type ApplyOutcome = {
 	applied: number
 	serverTimestamp: number
 	skipped: string[]
+	warning?: string
 }
 
 /** Push category changes to ZenMoney and refresh the cache from the response. */
@@ -84,15 +84,15 @@ export async function applyChanges(
 		return { applied: 0, serverTimestamp: currentStamp, skipped }
 	}
 
-	const diff = await fetchDiff(token, endpoint, { serverTimestamp: currentStamp, transaction: mutated }, fetchImpl)
+	const pushed = await pushDiff(
+		db,
+		token,
+		endpoint,
+		{ serverTimestamp: currentStamp, transaction: mutated },
+		fetchImpl,
+	)
 
-	applyDiff(db, diff)
-
-	return {
-		applied: mutated.length,
-		serverTimestamp: diff.serverTimestamp,
-		skipped,
-	}
+	return { applied: mutated.length, skipped, ...pushed }
 }
 
 export function registerApplyCategories(server: McpServer, ctx: ToolContext) {

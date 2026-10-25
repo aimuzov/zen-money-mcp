@@ -1,16 +1,14 @@
-import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { failure, json } from '@aimuzov/infra-mcp-kit'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-import { fetchDiff } from '#zen/api/fetch-diff'
 import { getValidAccessToken, NotAuthenticatedError } from '#zen/auth/index'
 import { buildImportPlan, type ImportPlan } from '#zen/import/build-import'
 import { extractPdfText } from '#zen/import/extract-pdf-text'
 import { parseOzonStatement } from '#zen/import/ozon-statement'
 import type { ToolContext } from '#zen/mcp/context'
-import { applyDiff } from '#zen/store/apply-diff'
+import { pushDiff } from '#zen/mcp/push-diff'
 import { getMeta } from '#zen/store/db'
 import { getAccount, type AccountInfo } from '#zen/store/queries'
 
@@ -99,7 +97,6 @@ export function registerImportStatement(server: McpServer, ctx: ToolContext) {
 				instrument: account.instrument,
 				user: account.user,
 				now: Math.floor(Date.now() / 1000),
-				newId: randomUUID,
 			})
 			const summary = summarizeImport(plan, account)
 
@@ -127,17 +124,15 @@ export function registerImportStatement(server: McpServer, ctx: ToolContext) {
 			}
 
 			const serverTimestamp = Number(getMeta(ctx.db, 'serverTimestamp') ?? 0)
-			const diff = await fetchDiff(token, ctx.cfg.endpoint, {
+			const pushed = await pushDiff(ctx.db, token, ctx.cfg.endpoint, {
 				serverTimestamp,
 				transaction: plan.create,
 			})
 
-			applyDiff(ctx.db, diff)
-
 			return json({
 				dryRun: false,
 				applied: plan.create.length,
-				serverTimestamp: diff.serverTimestamp,
+				...pushed,
 				...summary,
 			})
 		},
