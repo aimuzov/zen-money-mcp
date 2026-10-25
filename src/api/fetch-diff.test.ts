@@ -72,4 +72,31 @@ describe('fetchDiff', () => {
 			/HTTP 200.*maintenance/,
 		)
 	})
+
+	it('403 -- не просьба войти, а ошибка со статусом и телом', async () => {
+		const fakeFetch = async () => new Response('Forbidden', { status: 403 })
+
+		await assert.rejects(
+			fetchDiff('my-token', 'ru', { serverTimestamp: 0 }, fakeFetch as unknown as typeof fetch),
+			(err: Error) => !(err instanceof NotAuthenticatedError) && err.message.endsWith('HTTP 403: Forbidden'),
+		)
+	})
+
+	it('5xx с JSON-телом тоже несёт статус и тело', async () => {
+		const fakeFetch = async () => Response.json({ error: 'overloaded' }, { status: 500 })
+
+		await assert.rejects(
+			fetchDiff('my-token', 'ru', { serverTimestamp: 0 }, fakeFetch as unknown as typeof fetch),
+			/ZenMoney diff request failed: HTTP 500: \{"error":"overloaded"\}$/,
+		)
+	})
+
+	it('на 401 просит запустить auth', async () => {
+		const fakeFetch = async () => Response.json({ error: 'invalid_token' }, { status: 401 })
+
+		await assert.rejects(
+			fetchDiff('my-token', 'ru', { serverTimestamp: 0 }, fakeFetch as unknown as typeof fetch),
+			/HTTP 401.*zen-money-mcp auth/,
+		)
+	})
 })

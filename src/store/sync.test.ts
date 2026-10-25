@@ -49,4 +49,21 @@ describe('sync', () => {
 		await sync(db, 'tok', 'ru', { full: true, fetchImpl: fakeFetch })
 		assert.equal(calls[0]!.body.serverTimestamp, 0)
 	})
+
+	it('на пустом кэше начинает с нуля', async () => {
+		const empty = openDb(':memory:')
+		const { fakeFetch, calls } = fetchReturning({ serverTimestamp: 10 })
+		const result = await sync(empty, 'tok', 'ru', { fetchImpl: fakeFetch })
+
+		assert.equal(calls[0]!.body.serverTimestamp, 0)
+		assert.deepEqual(result, { added: 0, deletions: 0, from: 0, to: 10 })
+	})
+
+	it('ошибка ZenMoney не сдвигает курсор и время синхронизации', async () => {
+		const fakeFetch = (async () => new Response('down', { status: 503 })) as unknown as typeof fetch
+
+		await assert.rejects(sync(db, 'tok', 'ru', { fetchImpl: fakeFetch }), /HTTP 503: down/)
+		assert.equal(getMeta(db, 'serverTimestamp'), '100')
+		assert.equal(getMeta(db, 'lastSyncAt'), undefined)
+	})
 })

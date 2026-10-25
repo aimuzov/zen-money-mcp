@@ -66,3 +66,24 @@ describe('loadConfig: проверка переменных окружения',
 		})
 	}
 })
+
+describe('loadConfig: порт из ZEN_REDIRECT_URI и каталог данных', () => {
+	it('без порта в URI берётся порт схемы', () => {
+		assert.equal(loadConfig({ ZEN_REDIRECT_URI: 'https://example.test/cb' }).redirectPort, 443)
+		assert.equal(loadConfig({ ZEN_REDIRECT_URI: 'http://127.0.0.1/cb' }).redirectPort, 80)
+	})
+
+	it('ZEN_REDIRECT_URI главнее ZEN_REDIRECT_PORT', () => {
+		const cfg = loadConfig({ ZEN_REDIRECT_URI: 'http://localhost:4000/cb', ZEN_REDIRECT_PORT: '5000' })
+
+		assert.equal(cfg.redirectPort, 4000)
+	})
+
+	it('ZEN_DATA_DIR задаёт пути кэша и токена', () => {
+		const cfg = loadConfig({ ZEN_DATA_DIR: '/data/zen' })
+
+		assert.equal(cfg.dataDir, '/data/zen')
+		assert.equal(cfg.dbPath, '/data/zen/cache.sqlite')
+		assert.equal(cfg.authPath, '/data/zen/auth.json')
+	})
+})

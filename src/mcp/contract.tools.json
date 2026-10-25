@@ -1,0 +1,184 @@
+[
+	{
+		"name": "zen_apply_categories",
+		"title": "Apply category changes",
+		"description": "Write category changes back to ZenMoney. ALWAYS call with dryRun:true first (the default) to preview before -> after, present that list to the user, and only call again with dryRun:false after the user explicitly confirms. tagId null clears the category.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"changes": {
+					"minItems": 1,
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"transactionId": {
+								"type": "string"
+							},
+							"tagId": {
+								"type": ["string", "null"]
+							}
+						},
+						"required": ["transactionId", "tagId"]
+					}
+				},
+				"dryRun": {
+					"description": "Preview only (default true). Set false to actually write.",
+					"type": "boolean"
+				}
+			},
+			"required": ["changes"]
+		}
+	},
+	{
+		"name": "zen_find_transactions",
+		"title": "Find transactions",
+		"description": "Flexible filtered transaction lookup (newest first). Filter by date range, account, merchant/payee/mcc, uncategorized-only, or needs-review-only.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"from": {
+					"type": "string"
+				},
+				"to": {
+					"type": "string"
+				},
+				"account": {
+					"type": "string"
+				},
+				"uncategorizedOnly": {
+					"type": "boolean"
+				},
+				"needsReviewOnly": {
+					"type": "boolean"
+				},
+				"merchant": {
+					"type": "string"
+				},
+				"payee": {
+					"type": "string"
+				},
+				"mcc": {
+					"type": "number"
+				},
+				"minOutcome": {
+					"type": "number"
+				},
+				"limit": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 500
+				}
+			}
+		}
+	},
+	{
+		"name": "zen_import_statement",
+		"title": "Import bank statement",
+		"description": "Import missing transactions from an Ozon-bank PDF statement into a ZenMoney account. Deduplicates against existing transactions by date + amount; credit repayments (transfers) are never created. ALWAYS call with dryRun:true first (the default) to preview the plan, present it to the user, and only call again with dryRun:false after explicit confirmation. New transactions are created without a category (run zen_review_expenses afterwards).",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"filePath": {
+					"type": "string",
+					"description": "Absolute path to the PDF statement"
+				},
+				"account": {
+					"type": "string",
+					"description": "Target account id (exact)"
+				},
+				"dryRun": {
+					"description": "Preview only (default true). Set false to actually write.",
+					"type": "boolean"
+				}
+			},
+			"required": ["filePath", "account"]
+		}
+	},
+	{
+		"name": "zen_list_categories",
+		"title": "List categories",
+		"description": "The category (tag) vocabulary with hierarchy and human-readable paths. Use the ids when proposing category changes.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"description": "Filter by category kind (default outcome)",
+					"type": "string",
+					"enum": ["outcome", "income", "all"]
+				}
+			}
+		}
+	},
+	{
+		"name": "zen_merchant_history",
+		"title": "Merchant history",
+		"description": "Full historical category breakdown for a place (by merchant id, payee text, or mcc): how often each category was used, totals, and recent examples. Use to dig deeper when a review row is ambiguous.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"merchant": {
+					"type": "string"
+				},
+				"payee": {
+					"type": "string"
+				},
+				"mcc": {
+					"type": "number"
+				},
+				"from": {
+					"type": "string"
+				},
+				"to": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	{
+		"name": "zen_review_expenses",
+		"title": "Review expenses",
+		"description": "Audit expenses in a date range: returns those that are uncategorized or likely mis-categorized, each with the current category and ranked candidate categories (with confidence) inferred from history at the same place. YOU decide the final category from this evidence, then propose changes via zen_apply_categories. Run zen_sync first if the cache may be stale.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"from": {
+					"type": "string",
+					"description": "Start date, inclusive (YYYY-MM-DD)"
+				},
+				"to": {
+					"type": "string",
+					"description": "End date, inclusive (YYYY-MM-DD)"
+				},
+				"account": {
+					"description": "Limit to one account id",
+					"type": "string"
+				},
+				"includeOk": {
+					"description": "Also include expenses that look fine (default false)",
+					"type": "boolean"
+				},
+				"limit": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 300
+				}
+			},
+			"required": ["from", "to"]
+		}
+	},
+	{
+		"name": "zen_sync",
+		"title": "Sync cache",
+		"description": "Pull the latest data from ZenMoney into the local cache. Run this before auditing if the data may be stale. full:true re-fetches the entire history.",
+		"inputSchema": {
+			"type": "object",
+			"properties": {
+				"full": {
+					"description": "Re-fetch everything from scratch",
+					"type": "boolean"
+				}
+			}
+		}
+	}
+]
