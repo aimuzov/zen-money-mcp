@@ -119,10 +119,37 @@ describe('getValidAccessToken', () => {
 
 	it('throws NotAuthenticatedError when refresh fails', async () => {
 		writeToken(cfg, baseToken)
-		const fetchImpl = (async () => ({
-			json: async () => ({ error: 'invalid_grant' }),
-		})) as unknown as typeof fetch
+		const fetchImpl = (async () =>
+			Response.json({ error: 'invalid_grant' }, { status: 400 })) as unknown as typeof fetch
 
 		await assert.rejects(getValidAccessToken(cfg, { now: 20_000, fetchImpl }), NotAuthenticatedError)
 	})
+
+	it('invalid_grant даже с кодом 200 требует перелогина', async () => {
+		writeToken(cfg, baseToken)
+		const fetchImpl = (async () => Response.json({ error: 'invalid_grant' })) as unknown as typeof fetch
+
+		await assert.rejects(getValidAccessToken(cfg, { now: 20_000, fetchImpl }), NotAuthenticatedError)
+	})
+
+	const transient: [string, () => Response, RegExp][] = [
+		['5xx', () => new Response('upstream down', { status: 503 }), /HTTP 503.*upstream down/],
+		['HTML с кодом 200', () => new Response('<html>maintenance</html>'), /HTTP 200.*maintenance/],
+		['ответ без access_token', () => Response.json({ error: 'server_error' }), /HTTP 200.*server_error/],
+	]
+
+	for (const [name, respond, message] of transient) {
+		it(`временный сбой refresh (${name}) не требует перелогина`, async () => {
+			writeToken(cfg, baseToken)
+			const fetchImpl = (async () => respond()) as unknown as typeof fetch
+
+			await assert.rejects(
+				getValidAccessToken(cfg, { now: 20_000, fetchImpl }),
+				(err: Error) => !(err instanceof NotAuthenticatedError) && message.test(err.message),
+			)
+
+			// токен не тронут
+			assert.equal(readToken(cfg)!.refresh_token, 'refresh-1')
+		})
+	}
 })

@@ -5,6 +5,7 @@ import { endpoints } from '#zen/api/endpoints'
 import type { Config } from '#zen/config'
 
 import { writeToken, type StoredToken } from './store.ts'
+import { readTokenResponse } from './token-response.ts'
 
 const CALLBACK_TIMEOUT_MS = 120_000
 
@@ -61,16 +62,7 @@ async function exchangeCode(cfg: Config, code: string): Promise<StoredToken> {
 			code,
 		}),
 	})
-	const data = (await response.json()) as {
-		access_token?: string
-		refresh_token?: string
-		expires_in?: number
-		error?: unknown
-	}
-
-	if (!data.access_token) {
-		throw new Error(`Token exchange failed: ${JSON.stringify(data.error ?? data)}`)
-	}
+	const data = await readTokenResponse(response, 'Token exchange')
 
 	return {
 		access_token: data.access_token,

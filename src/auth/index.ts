@@ -1,15 +1,11 @@
 import { endpoints } from '#zen/api/endpoints'
 import type { Config } from '#zen/config'
 
+import { NotAuthenticatedError } from './errors.ts'
 import { readToken, writeToken, type StoredToken } from './store.ts'
+import { readTokenResponse } from './token-response.ts'
 
-/** Thrown when there is no usable token and the user must run `auth`. */
-export class NotAuthenticatedError extends Error {
-	constructor(message = 'Not authenticated. Run `zen-money-mcp auth` in your terminal once, then retry.') {
-		super(message)
-		this.name = 'NotAuthenticatedError'
-	}
-}
+export { NotAuthenticatedError }
 
 const SKEW_SECONDS = 60
 
@@ -22,7 +18,8 @@ export type TokenOptions = {
 
 /**
  * Return a valid access token, refreshing it transparently if expired.
- * Throws NotAuthenticatedError if there is no token or the refresh fails.
+ * Throws NotAuthenticatedError if there is no token or the server rejects the
+ * refresh; a transient refresh failure throws a plain Error with the status.
  */
 export async function getValidAccessToken(cfg: Config, opts: TokenOptions = {}): Promise<string> {
 	const token = readToken(cfg)
@@ -47,15 +44,7 @@ async function refreshToken(cfg: Config, token: StoredToken, now: number, fetchI
 			client_secret: cfg.clientSecret,
 		}),
 	})
-	const data = (await response.json()) as {
-		access_token?: string
-		refresh_token?: string
-		expires_in?: number
-	}
-
-	if (!data.access_token) {
-		throw new NotAuthenticatedError('Token refresh failed. Run `zen-money-mcp auth` again to re-authorize.')
-	}
+	const data = await readTokenResponse(response, 'Token refresh')
 
 	const updated: StoredToken = {
 		access_token: data.access_token,

@@ -1,4 +1,4 @@
-import { NotAuthenticatedError } from '#zen/auth/index'
+import { NotAuthenticatedError } from '#zen/auth/errors'
 
 import type { EndpointPreference } from './endpoints.ts'
 import { endpoints } from './endpoints.ts'
