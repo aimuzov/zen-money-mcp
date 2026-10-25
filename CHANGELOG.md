@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.0...v1.0.1) (2026-10-25)
+
+
+### Bug Fixes
+
+* **api:** check HTTP status in fetchDiff ([b0f2407](https://github.com/aimuzov/zen-money-mcp/commit/b0f24072e935e548792fe0f7ad14b569003addce))
+* **auth:** keep transient token errors apart from rejected grants ([561c3c4](https://github.com/aimuzov/zen-money-mcp/commit/561c3c4d0199f588de697a0cafa85e7e76935c07))
+* **auth:** report a busy OAuth callback port instead of crashing ([c65ef12](https://github.com/aimuzov/zen-money-mcp/commit/c65ef1219d1c1b3b222b175cb5339b6c7386544f))
+* **auth:** surface unreadable token file instead of treating it as missing ([d372127](https://github.com/aimuzov/zen-money-mcp/commit/d3721275856e8c013464ffd22aa672ef2560c003))
+* **config:** reject invalid env values and load config lazily ([9366bcf](https://github.com/aimuzov/zen-money-mcp/commit/9366bcf5840109e4501eedf78056b90684a5c1f4))
+* **import:** make writes safe to retry after a local cache failure ([12d9d73](https://github.com/aimuzov/zen-money-mcp/commit/12d9d73bbd286c32e9a57f35ca3f33f50aac747c))
+* stop hiding ZenMoney write, token and config errors ([55142bf](https://github.com/aimuzov/zen-money-mcp/commit/55142bf733cecca15f82139fc1ca130c40152c1f))
+
 ## [1.0.0](https://github.com/aimuzov/zen-money-mcp/compare/v0.1.0...v1.0.0) (2026-10-25)
 
 

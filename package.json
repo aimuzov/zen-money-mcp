@@ -1,6 +1,6 @@
 {
 	"name": "@aimuzov/zen-money-mcp",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "MCP server for ZenMoney: audit and fix transaction categories with historical context, import missing transactions from bank statements",
 	"keywords": [
 		"mcp",
