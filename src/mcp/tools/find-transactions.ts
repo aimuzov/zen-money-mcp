@@ -45,14 +45,15 @@ export function registerFindTransactions(server: McpServer, ctx: ToolContext) {
 			},
 		},
 		async (args: FindInput) => {
-			const { needsReviewOnly, ...filter } = args
-			let rows = findTransactions(ctx.db, {
-				...filter,
-				limit: filter.limit ?? DEFAULT_LIMIT,
-			})
+			const { needsReviewOnly, limit = DEFAULT_LIMIT, ...filter } = args
+			// Фильтр по разбору идёт в коде, а не в SQL: с лимитом в запросе свежие верные
+			// покупки вытесняли бы более старые ошибки. -1 -- это LIMIT без ограничения в SQLite.
+			let rows = findTransactions(ctx.db, { ...filter, limit: needsReviewOnly ? -1 : limit })
 
 			if (needsReviewOnly) {
-				rows = rows.filter((tx) => reviewTransaction(tx, getCategoryHistoryFor(ctx.db, tx)).status !== 'ok')
+				rows = rows
+					.filter((tx) => reviewTransaction(tx, getCategoryHistoryFor(ctx.db, tx)).status !== 'ok')
+					.slice(0, limit)
 			}
 
 			const presenter = new Presenter(ctx.db)

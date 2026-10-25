@@ -51,16 +51,12 @@ describe('readTokenResponse', () => {
 		)
 	})
 
-	it(
-		'400 без invalid_grant -- не просьба войти, а ошибка со статусом',
-		{ skip: 'bug: любой 400 (invalid_request, invalid_client) выдаётся за отказ в гранте и просит перелогин' },
-		async () => {
-			await assert.rejects(
-				read(Response.json({ error: 'invalid_client' }, { status: 400 })),
-				transient(/^Token refresh failed: HTTP 400: .*invalid_client/),
-			)
-		},
-	)
+	it('400 без invalid_grant -- не просьба войти, а ошибка со статусом', async () => {
+		await assert.rejects(
+			read(Response.json({ error: 'invalid_client' }, { status: 400 })),
+			transient(/^Token refresh failed: HTTP 400: .*invalid_client/),
+		)
+	})
 
 	it('пустой access_token -- временный сбой', async () => {
 		await assert.rejects(read(Response.json({ access_token: '' })), transient(/HTTP 200/))

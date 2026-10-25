@@ -111,21 +111,17 @@ describe('zen_find_transactions', () => {
 		assert.deepEqual(await ids({ needsReviewOnly: true }), ['uncat', 'bad'])
 	})
 
-	it(
-		'needsReviewOnly с limit ищет среди всех, а не среди первых limit',
-		{ skip: 'bug: limit применяется до фильтра needsReviewOnly, флаги старше первых limit строк теряются' },
-		async () => {
-			// свежая покупка с верной категорией заслоняет более старую ошибочную
-			seedCache(cfg, {
-				serverTimestamp: 2,
-				transaction: [
-					makeTx({ id: 'g-new', date: '2026-05-30', outcome: 500, tag: ['groceries'], merchant: 'm1' }),
-				],
-			})
+	it('needsReviewOnly с limit ищет среди всех, а не среди первых limit', async () => {
+		// свежая покупка с верной категорией заслоняет более старую ошибочную
+		seedCache(cfg, {
+			serverTimestamp: 2,
+			transaction: [
+				makeTx({ id: 'g-new', date: '2026-05-30', outcome: 500, tag: ['groceries'], merchant: 'm1' }),
+			],
+		})
 
-			assert.deepEqual(await ids({ needsReviewOnly: true, merchant: 'm1', limit: 1 }), ['bad'])
-		},
-	)
+		assert.deepEqual(await ids({ needsReviewOnly: true, merchant: 'm1', limit: 1 }), ['bad'])
+	})
 
 	it('пустой результат -- count 0, а не ошибка', async () => {
 		const data = dataOf(await find({ from: '2030-01-01' }))

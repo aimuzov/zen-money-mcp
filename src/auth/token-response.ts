@@ -22,7 +22,8 @@ export async function readTokenResponse(response: Response, what: string): Promi
 
 	const detail = `HTTP ${response.status}: ${bodySnippet(text)}`
 
-	if (data?.error === 'invalid_grant' || response.status === 400 || response.status === 401) {
+	// Прочие 400 -- это ключи приложения или кривой запрос, их перелогин не починит.
+	if (data?.error === 'invalid_grant' || response.status === 401) {
 		throw new NotAuthenticatedError(
 			`${what} rejected (${detail}). Run \`zen-money-mcp auth\` again to re-authorize.`,
 		)
