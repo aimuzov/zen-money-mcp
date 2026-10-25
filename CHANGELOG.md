@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.2...v1.0.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* limit reviewed transactions after the filter, re-login only on a refused grant ([255625c](https://github.com/aimuzov/zen-money-mcp/commit/255625c4993c1cf6fc9a296e59cb48e3804a9d09))
+* limit reviewed transactions after the filter, re-login only on a refused grant ([86eefbe](https://github.com/aimuzov/zen-money-mcp/commit/86eefbe880b5422825c7878a88c46d090415d76e))
+
 ## [1.0.2](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.1...v1.0.2) (2026-10-25)
 
 
