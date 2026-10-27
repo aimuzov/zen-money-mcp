@@ -56,13 +56,13 @@
 		}
 	},
 	"dependencies": {
-		"@aimuzov/infra-mcp-kit": "github:aimuzov/infra-mcp-kit#v3.3.0",
+		"@aimuzov/infra-mcp-kit": "github:aimuzov/infra-mcp-kit#v3.4.0",
 		"open": "11.0.0",
 		"pdfjs-dist": "6.0.227",
 		"zod": "4.6.7"
 	},
 	"devDependencies": {
-		"@aimuzov/infra-site-kit": "github:aimuzov/infra-site-kit#v4.0.0",
+		"@aimuzov/infra-site-kit": "github:aimuzov/infra-site-kit#v5.8.1",
 		"@modelcontextprotocol/sdk": "1.32.1",
 		"@types/node": "26.6.5",
 		"oxlint": "1.87.0",
