@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/aimuzov/zen-money-mcp/compare/v1.1.0...v1.1.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** move to infra-mcp-kit 3.4.0 and infra-site-kit 5.8.1 ([448dab3](https://github.com/aimuzov/zen-money-mcp/commit/448dab3acf8d390022f18d0753a76ac170eaacde))
+* **deps:** move to infra-mcp-kit 3.4.0 and infra-site-kit 5.8.1 ([1ffb7d0](https://github.com/aimuzov/zen-money-mcp/commit/1ffb7d01074d992e99fb8920b348cbd013b78f68))
+
 ## [1.1.0](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.5...v1.1.0) (2026-10-27)
 
 
