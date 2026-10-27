@@ -27,7 +27,8 @@ Environment:
   ZEN_ENDPOINT                      ru (default) or app
   ZEN_REDIRECT_PORT                 OAuth callback port, default 53682
   ZEN_REDIRECT_URI                  full callback URI when the app registers another one
-  ZEN_DATA_DIR                      cache and token, default ~/.config/zen-money-mcp`,
+  ZEN_DATA_DIR                      cache and token, default ~/.config/zen-money-mcp
+  SENTRY_DSN                        report errors to Sentry, off when empty`,
 	stdio: () => createServer(loadConfig()),
 	commands: {
 		auth: async () => {

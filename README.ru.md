@@ -93,14 +93,15 @@ Usage: zen-money-mcp [serve|auth|sync [--full]|--help|--version]
 
 ## Переменные окружения
 
-| Переменная                           | По умолчанию              | Что делает                                            |
-| ------------------------------------ | ------------------------- | ----------------------------------------------------- |
-| `ZEN_CLIENT_ID`, `ZEN_CLIENT_SECRET` |                           | OAuth-приложение, нужно для входа и обновления токена |
-| `ZEN_ENDPOINT`                       | `ru`                      | `ru` — api.zenmoney.ru, `app` — api.zenmoney.app      |
-| `ZEN_REDIRECT_PORT`                  | `53682`                   | Порт колбэка `http://localhost:<port>/callback`       |
-| `ZEN_REDIRECT_URI`                   |                           | Полный URI колбэка, если в приложении он другой       |
-| `ZEN_DATA_DIR`                       | `~/.config/zen-money-mcp` | Кэш `cache.sqlite` и токен `auth.json`                |
-| `LOG_LEVEL`                          | `info`                    | `error`, `warn`, `info` или `debug`                   |
+| Переменная                           | По умолчанию              | Что делает                                                                                                                           |
+| ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ZEN_CLIENT_ID`, `ZEN_CLIENT_SECRET` |                           | OAuth-приложение, нужно для входа и обновления токена                                                                                |
+| `ZEN_ENDPOINT`                       | `ru`                      | `ru` — api.zenmoney.ru, `app` — api.zenmoney.app                                                                                     |
+| `ZEN_REDIRECT_PORT`                  | `53682`                   | Порт колбэка `http://localhost:<port>/callback`                                                                                      |
+| `ZEN_REDIRECT_URI`                   |                           | Полный URI колбэка, если в приложении он другой                                                                                      |
+| `ZEN_DATA_DIR`                       | `~/.config/zen-money-mcp` | Кэш `cache.sqlite` и токен `auth.json`                                                                                               |
+| `LOG_LEVEL`                          | `info`                    | `error`, `warn`, `info` или `debug`                                                                                                  |
+| `SENTRY_DSN`                         |                           | [Отчёты об ошибках](https://github.com/aimuzov/infra-mcp-kit/blob/main/README.ru.md#sentry) в Sentry, релиз `zen-money-mcp@<версия>` |
 
 Переменные можно положить в `.env` в корне пакета, окружение главнее файла.
 
