@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.5...v1.1.0) (2026-10-27)
+
+
+### Features
+
+* report errors to Sentry via infra-mcp-kit 3.3.0 ([729c071](https://github.com/aimuzov/zen-money-mcp/commit/729c071e965cafdee14220855ac98867e06fade7))
+* report errors to Sentry via infra-mcp-kit 3.3.0 ([2acbec7](https://github.com/aimuzov/zen-money-mcp/commit/2acbec71988403e5de28c0b8e52ad826f747ef2e))
+
 ## [1.0.5](https://github.com/aimuzov/zen-money-mcp/compare/v1.0.4...v1.0.5) (2026-10-27)
 
 
