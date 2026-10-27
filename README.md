@@ -93,14 +93,15 @@ Usage: zen-money-mcp [serve|auth|sync [--full]|--help|--version]
 
 ## Environment
 
-| Variable                             | Default                   | What it does                                       |
-| ------------------------------------ | ------------------------- | -------------------------------------------------- |
-| `ZEN_CLIENT_ID`, `ZEN_CLIENT_SECRET` |                           | The OAuth app, needed to sign in and refresh       |
-| `ZEN_ENDPOINT`                       | `ru`                      | `ru` is api.zenmoney.ru, `app` is api.zenmoney.app |
-| `ZEN_REDIRECT_PORT`                  | `53682`                   | Port of the `http://localhost:<port>/callback`     |
-| `ZEN_REDIRECT_URI`                   |                           | The full callback URI when the app has another one |
-| `ZEN_DATA_DIR`                       | `~/.config/zen-money-mcp` | The `cache.sqlite` cache and the `auth.json` token |
-| `LOG_LEVEL`                          | `info`                    | `error`, `warn`, `info` or `debug`                 |
+| Variable                             | Default                   | What it does                                                                                                  |
+| ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `ZEN_CLIENT_ID`, `ZEN_CLIENT_SECRET` |                           | The OAuth app, needed to sign in and refresh                                                                  |
+| `ZEN_ENDPOINT`                       | `ru`                      | `ru` is api.zenmoney.ru, `app` is api.zenmoney.app                                                            |
+| `ZEN_REDIRECT_PORT`                  | `53682`                   | Port of the `http://localhost:<port>/callback`                                                                |
+| `ZEN_REDIRECT_URI`                   |                           | The full callback URI when the app has another one                                                            |
+| `ZEN_DATA_DIR`                       | `~/.config/zen-money-mcp` | The `cache.sqlite` cache and the `auth.json` token                                                            |
+| `LOG_LEVEL`                          | `info`                    | `error`, `warn`, `info` or `debug`                                                                            |
+| `SENTRY_DSN`                         |                           | [Error reports](https://github.com/aimuzov/infra-mcp-kit#sentry) to Sentry, release `zen-money-mcp@<version>` |
 
 They may also live in `.env` at the package root, the environment wins over the file.
 
