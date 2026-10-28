@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/aimuzov/zen-money-mcp/compare/v1.1.1...v1.1.2) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** move to infra-mcp-kit 3.4.1 with the strict Sentry events ([9edf347](https://github.com/aimuzov/zen-money-mcp/commit/9edf34727521ae7940ee3ab98e1c07c992888d51))
+* **deps:** move to infra-mcp-kit 3.4.1 with the strict Sentry events ([e66eef5](https://github.com/aimuzov/zen-money-mcp/commit/e66eef56b19556066483ac300935155c8a97d1b6))
+
 ## [1.1.1](https://github.com/aimuzov/zen-money-mcp/compare/v1.1.0...v1.1.1) (2026-10-27)
 
 
