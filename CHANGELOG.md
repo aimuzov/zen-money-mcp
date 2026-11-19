@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/aimuzov/zen-money-mcp/compare/v1.1.3...v1.1.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency open to v11.0.4 ([#28](https://github.com/aimuzov/zen-money-mcp/issues/28)) ([2a18f75](https://github.com/aimuzov/zen-money-mcp/commit/2a18f75ad244bf9d97ac4b3c57c53a5f1503ade0))
+
 ## [1.1.3](https://github.com/aimuzov/zen-money-mcp/compare/v1.1.2...v1.1.3) (2026-10-29)
 
 
